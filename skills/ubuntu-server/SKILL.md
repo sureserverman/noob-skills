@@ -1,3 +1,8 @@
+---
+name: ubuntu-server
+description: Use when working with Ubuntu remote servers (22.04 LTS or 24.04 LTS) for troubleshooting, system administration, SSH diagnosis, networking, firewall, and provisioning workflows with version-specific guidance
+---
+
 # Ubuntu Server Skill (22.04 LTS / 24.04 LTS)
 
 Use this skill when working with Ubuntu servers. Always identify the Ubuntu version first and apply version-specific knowledge.
