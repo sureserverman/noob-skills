@@ -5,7 +5,72 @@ description: Use when creating, updating, or validating Debian .deb packages for
 
 # Debian Package Reference
 
-## Canonical Directory Structure
+> **WARNING:** Many projects have BOTH `deb/` and `mac/` directories. The `mac/` directory (with its own `Makefile`, `payload/`, `scripts/`) belongs to the macOS .pkg installer. **Do NOT modify, move, delete, or reorganize anything under `mac/`** when working on deb packaging. They are independent packaging pipelines that happen to share the same repo.
+
+## Project Directory Structure
+
+Projects with compiled (Rust) binaries follow this layout:
+
+```
+<project>/
+├── rust/                ← Rust source + Makefile
+│   ├── Cargo.toml
+│   ├── Cargo.lock
+│   ├── build.rs         ← if needed
+│   ├── Makefile         ← builds binary, moves to deb/
+│   └── src/
+├── deb/
+│   ├── amd64/           ← x86_64 binary staged here by Makefile
+│   ├── arm64/           ← aarch64 binary staged here by Makefile
+│   └── package/
+│       ├── DEBIAN/
+│       │   └── control
+│       └── usr/bin/     ← binary copied from amd64/ or arm64/ before dpkg-deb
+├── mac/                 ← macOS .pkg (DO NOT TOUCH from deb workflow)
+└── README.md
+```
+
+Non-Rust (pure bash) projects skip the `rust/` directory entirely.
+
+## Rust Makefile Convention
+
+The Makefile lives at `rust/Makefile` (not project root). Standard pattern:
+
+```makefile
+BINARY := <binary-name>
+
+.PHONY: all x86_64 aarch64 clean
+all: x86_64 aarch64
+
+x86_64:
+	rustup target add x86_64-unknown-linux-gnu
+	CARGO_TARGET_DIR=target/x86_64 \
+	  cargo build --release --target x86_64-unknown-linux-gnu
+	mkdir -p $(HOME)/dev/<project>/deb/amd64
+	mv target/x86_64/x86_64-unknown-linux-gnu/release/$(BINARY) \
+	   $(HOME)/dev/<project>/deb/amd64/$(BINARY)
+
+aarch64:
+	rustup target add aarch64-unknown-linux-gnu
+	CARGO_TARGET_DIR=target/aarch64 \
+	  cargo build --release --target aarch64-unknown-linux-gnu
+	mkdir -p $(HOME)/dev/<project>/deb/arm64
+	mv target/aarch64/aarch64-unknown-linux-gnu/release/$(BINARY) \
+	   $(HOME)/dev/<project>/deb/arm64/$(BINARY)
+
+clean:
+	rm -rf target $(HOME)/dev/<project>/deb/{amd64,arm64}/*
+```
+
+**Rules:**
+- Makefile goes in `rust/`, NOT the project root
+- Each arch builds into a separate `CARGO_TARGET_DIR` (e.g. `target/x86_64/`)
+- Binary is moved (not copied) into `deb/amd64/` or `deb/arm64/`
+- If a project only supports one arch (e.g. CUDA = x86_64 only), omit the other target
+
+---
+
+## Deb Package Structure
 
 ```
 <project>/
@@ -113,6 +178,10 @@ When auditing or before building, verify:
 - [ ] `postinst` uses `systemctl --global enable` (not `systemctl enable`) for user units
 - [ ] Console user detection uses `"${SUDO_USER:-$USER}"` not bare `$USER`
 - [ ] `dpkg-deb --build` targets `deb/package` not `package`
+- [ ] Makefile is at `rust/Makefile` (not project root)
+- [ ] Makefile uses `CARGO_TARGET_DIR=target/<arch>` for separate build dirs
+- [ ] Makefile moves binary to `deb/amd64/` or `deb/arm64/` (not `deb/package/usr/bin/`)
+- [ ] `mac/` directory is untouched (belongs to macOS .pkg pipeline)
 
 ---
 
@@ -126,6 +195,8 @@ When auditing or before building, verify:
 | System unit path for user service | Put in `etc/systemd/user/` not `etc/systemd/system/` |
 | Missing executable bit on postinst | `chmod 755 DEBIAN/postinst` |
 | `Architecture: all` for compiled binary | Use `amd64` or `arm64` |
+| Makefile at project root | Should be at `rust/Makefile` |
+| Modifying `mac/` directory during deb work | `mac/` is macOS .pkg — leave it alone |
 
 ---
 
