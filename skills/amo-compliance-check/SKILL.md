@@ -1,6 +1,6 @@
 ---
 name: amo-compliance-check
-description: Use when checking a Firefox extension for addons.mozilla.org (AMO) submission compliance, before packaging or publishing a Firefox WebExtension
+description: Use when checking a Firefox extension for addons.mozilla.org (AMO) submission compliance, before packaging or publishing a Firefox WebExtension. Trigger on "AMO rejected my addon", "prep this addon for mozilla", "check firefox extension for AMO", "is this extension signable", "will AMO accept this manifest".
 ---
 
 # AMO Compliance Check
@@ -11,7 +11,22 @@ Systematic review of a Firefox extension against addons.mozilla.org submission r
 
 When invoked, identify the extension root directory (the directory containing `manifest.json` for the Firefox/Mozilla version). If unclear, ask the user.
 
+**Preferred — run the bundled script first:**
+
+```bash
+skills/amo-compliance-check/scripts/amo-check.py <extension-dir>
+```
+
+It runs sections 1–8 and 10 automatically: manifest parse + required/conditional field validation (regex for version and gecko.id), icon-file existence + SVG attribute check, hidden/binary/case-duplicate scan, referenced-file existence, permission validation against the AMO-allowed set, remote-script and `eval`/`new Function`/string-timer detection, CSP `unsafe-eval` check, cryptominer references, and HTTP (non-HTTPS) URL scan. Output is per-finding lines plus the summary table. Exit 1 if any FAIL was found.
+
+**After the script, still read the sections below** — they are the source of truth for what's checked and cover the pieces that need human judgment: section 5 (is `<all_urls>` actually necessary?), section 7 (obfuscation/minification patterns), section 9 (content-script DOM-injection safety), and MV3 `data_collection_permissions` values. Use the numbered sections as both the script's spec and your manual-pass checklist.
+
+<details>
+<summary>Manual pass (fallback — only if the script isn't available)</summary>
+
 Run every check below in order. For each section, report PASS, WARN, or FAIL with a brief explanation. At the end, provide a summary table.
+
+</details>
 
 ## 1. Manifest — Required Fields
 
@@ -107,3 +122,24 @@ After all checks, output a table:
 ```
 
 Then list actionable items sorted by severity (FAIL first, then WARN).
+
+## Delegation (Claude Code only)
+
+> **Skip this section unless you are Claude Code.** The Agent tool with
+> `subagent_type:` parameters is a Claude Code feature. Codex, Cursor, Gemini,
+> OpenCode, and other hosts do not have it — run the full workflow yourself
+> instead.
+
+The manifest read, the permission enumeration, the `web-ext lint` run, and the
+file/structure checks are all read-only bulk I/O. If you are running on Opus and
+the extension is non-trivial, delegate the scan phase to the `readonly-scanner`
+subagent (model: haiku) via the Agent tool with `subagent_type: readonly-scanner`.
+Give it the extension root path and ask it to return:
+
+- `manifest.json` parsed, with all fields relevant to AMO policy.
+- The permission list, any host permissions, and which scripts declare them.
+- `web-ext lint --output=json` raw output if `web-ext` is on PATH.
+- File tree summary (size, count, flagged binary/minified files).
+
+Integrate those findings into the compliance verdict yourself — the verdict
+itself stays with the caller.

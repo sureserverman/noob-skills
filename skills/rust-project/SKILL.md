@@ -1,11 +1,25 @@
 ---
 name: rust-project
-description: Use when analyzing, auditing, or improving a Rust project in this ecosystem — dependency updates, security vulnerabilities, clippy lints, unused dependencies, test coverage, or cross-compile target validation for aarch64-apple-darwin
+description: Use when analyzing, auditing, or improving a Rust project in this ecosystem — dependency updates, security vulnerabilities, clippy lints, unused dependencies, test coverage, or cross-compile target validation for aarch64-apple-darwin. Trigger on "update my rust deps", "run clippy", "cargo audit", "cross-compile to aarch64-apple-darwin", "any unused crates", "bump my toolchain".
 ---
 
 # Rust Project Analysis
 
 Full analysis across 5 passes. Report all findings first, fix nothing until the user approves.
+
+## Running the analysis
+
+**Preferred — use the bundled script.** `scripts/analyze.sh` runs passes 0–3 end-to-end (tool preflight, fmt/clippy/check, outdated/audit/machete, tests/tarpaulin) and prints each section clearly labelled so you can paste findings straight into the Pass 4 summary.
+
+```bash
+skills/rust-project/scripts/analyze.sh            # auto-detects ./rust or .
+skills/rust-project/scripts/analyze.sh path/to/crate
+```
+
+It auto-detects the project layout (standalone vs `rust/` subdirectory), adds the `aarch64-apple-darwin` target if missing, and installs `cargo-outdated`/`audit`/`machete`/`tarpaulin` if not present. It skips `tarpaulin` on macOS with a note to use `cargo llvm-cov`. It does **not** apply fixes — that still needs your judgment and user approval at Pass 4.
+
+<details>
+<summary>Manual pass-by-pass commands (fallback — only if the script isn't available)</summary>
 
 ## Project Layout Detection
 
@@ -102,6 +116,8 @@ Report:
 - Files with 0% coverage (flag as ERROR if they contain non-trivial logic)
 
 Note: `cargo tarpaulin` is Linux-only. If running on macOS, use `cargo llvm-cov` instead (requires `cargo install cargo-llvm-cov`).
+
+</details>
 
 ---
 

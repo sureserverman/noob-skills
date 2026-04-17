@@ -1,6 +1,6 @@
 ---
 name: reality-domain-scanner
-description: Runs RealiTLScanner for a given IP to find TLS-feasible domains for VLESS/Reality, verifies they work, classifies them as gaming/entertainment/news/shop, and returns up to three matching domains. Use when the user asks to find Reality domains for an IP, scan for vless/reality SNI targets, or find gaming/entertainment/news/shop domains for Reality.
+description: Use when the user asks to find Reality domains for an IP, scan for VLESS/Reality SNI targets, get gaming/entertainment/news/shop domains for Reality, or mentions RealiTLScanner. Trigger on "find reality domains", "scan this IP for reality", "get vless SNI targets", "set up Reality SNI", "configure VLESS on this VPS", or when the user pastes a raw IP address alongside Reality/XTLS/VLESS context.
 ---
 
 # Reality Domain Scanner (RealiTLScanner + Classification)
@@ -16,7 +16,7 @@ Find domains suitable for **VLESS Reality** from a given IP: run RealiTLScanner,
 - `curl` available for reachability and classification fetches.
 - User provides a single **IP address** (or CIDR/domain; skill focuses on single IP).
 
-## Helper script (recommended)
+## Default workflow: use the bundled script
 
 From the skill directory (or with `SKILL_DIR` set), run:
 
@@ -28,7 +28,10 @@ From the skill directory (or with `SKILL_DIR` set), run:
 - Writes scanner CSV to `output_csv` (default: `reality_scan.csv`), then parses it, verifies each domain, classifies (gaming/entertainment/news/shop), and prints a markdown table of up to three working classified domains.
 - When invoking from another directory: `"$SKILL_DIR/scripts/scan-and-classify.sh" <IP>` or `bash /path/to/skills/reality-domain-scanner/scripts/scan-and-classify.sh <IP>`.
 
-## Workflow (manual steps)
+This is the primary path. Report the script's output to the user. Only fall through to the manual steps below if the script is unavailable, errors out, or the user explicitly asks for a step-by-step walk-through.
+
+<details>
+<summary>Manual steps (fallback — only if the script is unavailable)</summary>
 
 ### 1. Run RealiTLScanner
 
@@ -91,6 +94,8 @@ If **any** keyword for a category appears in the fetched content, tag the domain
 
 Add a short note that these domains are suitable for use as SNI/targets for VLESS Reality from the scanned IP.
 
+</details>
+
 ## Rules
 
 - **Single IP focus**: When the user gives one IP, use `-addr <IP>`. If they give a list or file, use `-in` as per RealiTLScanner docs.
@@ -110,11 +115,7 @@ Parse from that file in step 2.
 
 ## Example
 
-User says: "Find Reality domains for IP 1.2.3.4."
-
-**Option A (script):** From the skill dir, run `./scripts/scan-and-classify.sh 1.2.3.4` and report the script output.
-
-**Option B (manual):** Run RealiTLScanner, parse CSV, verify and classify each domain until three are found, then output the table.
+User says: "Find Reality domains for IP 1.2.3.4." → from the skill dir, run `./scripts/scan-and-classify.sh 1.2.3.4` and report the script output.
 
 ## Reference
 

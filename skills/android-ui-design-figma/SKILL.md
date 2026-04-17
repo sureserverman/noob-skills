@@ -1,6 +1,6 @@
 ---
 name: android-ui-design-figma
-description: Handles any design, UI, UX, or layout change for Android apps. Checks standard tools, frameworks, and best practices first; uses DIY (custom implementation) only when no standard way exists. Use when design, UI, UX, layouts, theming, components, screens, or Figma are discussed or requested.
+description: Use when the user asks to change, design, or restyle Android UI — theming, layouts, screens, components, Material 3, Compose, Views, navigation, typography, colors, spacing, or Figma integration for an Android app. Trigger on "redesign this screen", "add a Figma design", "restyle the app", "dark mode", "this screen feels cramped", "make the app look more modern", a screenshot showing a UI issue, or any UI/UX change request for Android.
 ---
 
 # Android UI Design and Figma Workflow
@@ -72,7 +72,7 @@ Apply this at every step: theming, components, layout, navigation, motion, acces
 - **Never invent screens or flows**: Design only for screens and flows that exist (or are explicitly requested) in the app.
 - **Spec over vague intent**: Every design change in the spec must be implementable (values, not only descriptions).
 - **One source of truth**: Keep the design spec and any Figma file in sync; when the user amends in Figma, update the spec or re-fetch context before changing code.
-- **Android stack**: Apply changes in the project's actual stack (Compose, Views, or mixed). Follow the project's architecture and the android-gradle-build skill for builds and tests.
+- **Android stack**: Apply changes in the project’s actual stack (Compose, Views, or mixed). Follow the project’s architecture and the android-gradle-build skill for builds, tests, and F-Droid/store publishing (metadata, fastlane, pipeline).
 
 ## Summary Checklist
 
@@ -82,3 +82,27 @@ Apply this at every step: theming, components, layout, navigation, motion, acces
 - [ ] User feedback gathered and spec (and Figma, if used) updated until approved.
 - [ ] Design applied in code using standard components/APIs where possible; Figma context used when URL provided.
 - [ ] Build and tests pass before considering the task complete.
+
+## Delegation (Claude Code only)
+
+> **Skip this section unless you are Claude Code.** The Agent tool with
+> `subagent_type:` parameters is a Claude Code feature. Codex, Cursor, Gemini,
+> OpenCode, and other hosts do not have it — run the full workflow yourself
+> instead.
+
+Once the design spec has been approved by the user, producing the actual
+Compose code (the "design applied in code" step) is a Sonnet-tier code
+generation job. If you are on Opus, delegate the code-write phase to the
+`code-generator` subagent (model: sonnet) via the Agent tool with
+`subagent_type: code-generator`. Give it:
+
+- the approved design spec (exact values: tokens, spacing, typography,
+  component choices),
+- the target file paths,
+- the Compose/Material 3 version and any project theme/tokens it must honor,
+- 2–3 neighbor files so it matches the project's existing conventions,
+- the instruction to verify with the project's build/check command (e.g.
+  `./gradlew :app:compileDebugKotlin`) before returning.
+
+Keep app analysis, the design spec itself, the user-feedback loop, and any
+Figma work in this session — those are where the design judgment lives.

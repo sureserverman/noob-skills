@@ -1,6 +1,6 @@
 ---
 name: review-readme
-description: Use when reviewing, auditing, or improving a project's README.md — checks structure against best practices, content accuracy, visual design, and brevity before making targeted improvements
+description: Use when reviewing, auditing, or improving a project's README.md — also triggers on "my readme is a mess", "clean up the readme", "the readme is too long", "readme feels off", "make the readme nicer", or a user sharing a README and asking what's wrong with it
 ---
 
 # Review README
@@ -86,3 +86,36 @@ Present findings:
 Use AskUserQuestion with options: "All", "ISSUE + IMPROVE only", "Let me pick". After applying, show before/after summary.
 
 **Key constraint: Never grow the README to fix it.** If adding content, cut or collapse something first. The goal is *shorter and better*, not longer and more complete.
+
+## Delegation (Claude Code only)
+
+> **Skip this section unless you are Claude Code.** The Agent tool with
+> `subagent_type:` parameters is a Claude Code feature. Codex, Cursor, Gemini,
+> OpenCode, and other hosts do not have it — run the full workflow yourself
+> instead.
+
+Two phases can move off Opus.
+
+**Evidence phase (to haiku).** The scan pass (reading the README, walking the
+repo for stated vs actual features, probing badge and link targets, checking
+referenced commands exist) is pure read work. Delegate to the `readonly-scanner`
+subagent (model: haiku) via the Agent tool with `subagent_type: readonly-scanner`.
+Ask it to return:
+
+- README structure: section headings with line ranges, word counts per section,
+  badge targets with HTTP status, every link/URL with status.
+- Repo evidence: which claimed files, directories, and commands actually exist
+  (cross-check against manifests, Makefile, scripts, package.json).
+
+**Rewrite phase (to sonnet).** After the user has picked which findings to
+apply (the AskUserQuestion step), the actual edits are a Sonnet-tier rewrite
+job. Delegate to the `skill-rewriter` subagent (model: sonnet) via the Agent
+tool with `subagent_type: skill-rewriter`. Give it:
+
+- the README path,
+- the approved findings list (each with severity, section, specific instruction),
+- the hard constraint: the README may only shrink — if an edit adds content,
+  cut or collapse matching content elsewhere in the same edit.
+
+Keep the ISSUE/IMPROVE/STYLE classification and the before/after summary in
+this session.

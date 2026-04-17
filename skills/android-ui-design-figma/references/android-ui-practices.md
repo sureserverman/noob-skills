@@ -14,7 +14,7 @@ Reference for the android-ui-design-figma skill. Use when choosing design direct
 - **Roles over raw sizes**: Prefer type roles (e.g. headline, body, label) so scaling and accessibility stay consistent.
 - **Variable fonts (M3)**: Weight and width axes for motion and hierarchy; use sparingly for impact.
 - **Legibility**: Minimum touch target 48dp; body text large enough for readability (e.g. 14–16sp body).
-- **Numerals**: Use the numerals type role for numbers that don't need localization (e.g. stats, scores).
+- **Numerals**: Use the numerals type role for numbers that don’t need localization (e.g. stats, scores).
 
 ## Layout and Spacing
 

@@ -1,6 +1,6 @@
 ---
 name: android-gradle-build
-description: Use when creating or modifying Android build scripts, wiring Gradle modules, running Android unit or instrumented tests, or touching security-sensitive storage — before writing any build configuration, implementation file, or test command
+description: Use when creating or modifying Android build scripts, wiring Gradle modules, running Android unit or instrumented tests, or touching security-sensitive storage — before writing any build configuration, implementation file, or test command. Trigger on "gradle build failing", "add a module", "wire up instrumented tests", "my androidTest won't run", "keystore for encrypted prefs", "update my AGP version".
 ---
 
 # Android Gradle Build
@@ -71,7 +71,10 @@ All checks pass?
     └── PASSES → Feature Module phase complete.
 ```
 
-**Never:** `kapt` · Compose deps without BOM · `implementation(project(":app"))` in library modules
+**Never:**
+- `kapt` — KSP is the supported replacement; KAPT is ~2× slower and slated for deprecation by JetBrains.
+- Compose deps without BOM — versions drift across artifacts and produce incompatible runtime combinations.
+- `implementation(project(":app"))` in library modules — inverts the dependency graph and causes circular build failures.
 
 ## Phase 3: Test Verification
 
@@ -94,7 +97,10 @@ Instrumented tests exist (src/androidTest/)?
     └── PASSES → Test Verification complete.
 ```
 
-**Never:** mark task complete with failing tests · use `--quiet` · substitute test types
+**Never:**
+- Mark task complete with failing tests — downstream work assumes the gate held and debugging compounds.
+- Use `--quiet` — Gradle output is how you find the first failing test; suppressing it hides the root cause.
+- Substitute test types — unit tests and instrumented tests catch different classes of bug; one doesn't cover the other.
 
 ## Phase 4: Commit
 
@@ -106,7 +112,7 @@ Any of these staged? (HARD STOP)
   · passwords/tokens/secrets in any source file
   · .gradle/ build/ *.keystore directories staged
   · http:// base URLs in production Retrofit config
-├── YES → Remove. No exceptions.
+├── YES → Remove. Even "just for testing" secrets reach git history and are effectively leaked — rewriting history is disruptive and often incomplete.
 └── NO ↓
 All unit tests pass for changed modules?
 ├── NO → Fix before committing.

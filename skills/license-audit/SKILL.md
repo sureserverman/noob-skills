@@ -1,6 +1,6 @@
 ---
 name: license-audit
-description: Use when auditing a project's software dependencies for license compliance — discovers dependencies, determines licenses, analyzes compatibility, proposes valid project licenses, and generates LICENSE.md
+description: Use when the user asks to audit licenses, check license compliance, find license conflicts, pick a project license, or generate a LICENSE/LICENSE.md file. Trigger on "audit licenses", "what license should this project use", "are my dependencies GPL-compatible", or "generate a LICENSE file".
 ---
 
 # License Audit
@@ -55,35 +55,7 @@ For each dependency, determine its license using these methods in order:
 
 ### 2a. Well-Known License Reference
 
-Check against this reference table of commonly-used packages first:
-
-| Package | License | Source |
-|---|---|---|
-| alpine (base image) | MIT | Alpine Linux project |
-| debian / ubuntu (base images) | Various (base: GPL-2.0+) | Debian/Ubuntu projects |
-| tor | BSD-3-Clause | The Tor Project |
-| socat | GPL-2.0-only | Gerhard Rieger |
-| haproxy | GPL-2.0-or-later | Willy Tarreau |
-| stunnel | GPL-2.0-or-later | Michal Trojnara |
-| tini | MIT | Thomas Orozco |
-| nginx | BSD-2-Clause | Nginx Inc. |
-| curl | MIT (curl license) | Daniel Stenberg |
-| openssl | Apache-2.0 | OpenSSL Project |
-| libressl | ISC + OpenSSL legacy | OpenBSD Foundation |
-| busybox | GPL-2.0-only | BusyBox project |
-| musl libc | MIT | musl project |
-| glibc | LGPL-2.1-or-later | GNU project |
-| bash | GPL-3.0-or-later | GNU project |
-| python | PSF-2.0 (permissive) | Python Software Foundation |
-| node / nodejs | MIT | OpenJS Foundation |
-| go (stdlib) | BSD-3-Clause | The Go Authors |
-| rust (stdlib) | MIT OR Apache-2.0 | Rust Foundation |
-| redis | BSD-3-Clause (pre-7.4) / SSPL+RSALv2 (7.4+) | Redis Ltd. |
-| postgresql | PostgreSQL (permissive) | PostgreSQL Global Dev Group |
-| obfs4proxy | BSD-2-Clause | The Tor Project |
-| lyrebird | BSD-2-Clause | The Tor Project |
-| snowflake | BSD-3-Clause | The Tor Project |
-| webtunnel | BSD-3-Clause | The Tor Project |
+Check [references/well-known-licenses.md](references/well-known-licenses.md) for common packages (alpine, tor, socat, nginx, openssl, bash, python, node, go, rust, redis, postgresql, the Tor pluggable transports, etc.). If the dependency is listed there, use that license and skip registry lookup.
 
 ### 2b. Registry and Package Database Lookups
 
@@ -124,16 +96,7 @@ Update the dependency table with license information:
 
 ### 3a. License Classification
 
-Classify each discovered license into a category:
-
-| Category | Licenses | Notes |
-|---|---|---|
-| Public Domain | CC0-1.0, Unlicense, WTFPL | No restrictions |
-| Permissive | MIT, BSD-2-Clause, BSD-3-Clause, ISC, Apache-2.0, PSF-2.0, PostgreSQL, Zlib, curl | Attribution required; Apache-2.0 has patent clause |
-| Weak Copyleft | LGPL-2.1-only, LGPL-2.1-or-later, LGPL-3.0-only, LGPL-3.0-or-later, MPL-2.0, EPL-2.0 | Copyleft on modified files/library only |
-| Strong Copyleft | GPL-2.0-only, GPL-2.0-or-later, GPL-3.0-only, GPL-3.0-or-later | Copyleft on combined work |
-| Network Copyleft | AGPL-3.0-only, AGPL-3.0-or-later, SSPL-1.0 | Copyleft extends to network use |
-| Non-Free / Restrictive | BUSL-1.1, Elastic-2.0, proprietary | May prohibit redistribution |
+Classify each discovered license into one of: **public-domain**, **permissive**, **weak-copyleft**, **strong-copyleft**, **network-copyleft** (AGPL/SSPL — copyleft extends to network use), or **non-free** (BUSL, Elastic, proprietary — may prohibit redistribution). Use the SPDX identifier; if a license's category is genuinely ambiguous, flag it **WARN** and ask the user before proceeding.
 
 ### 3b. Copyleft Propagation Analysis
 
@@ -157,12 +120,7 @@ Docker images have specific licensing considerations:
 
 ### 3d. GPL Version Compatibility
 
-Check for GPL version conflicts:
-
-- [ ] **GPL-2.0-only** is NOT compatible with **GPL-3.0-only** or **GPL-3.0-or-later** in a combined work
-- [ ] **GPL-2.0-or-later** IS compatible with **GPL-3.0+** (resolved at GPL-3.0)
-- [ ] **Apache-2.0** is compatible with **GPL-3.0+** but NOT with **GPL-2.0-only**
-- [ ] **LGPL-2.1-or-later** is compatible with **GPL-2.0-or-later**
+Flag any GPL-2.0-only × GPL-3.0-only combination in a combined work as **ERROR**. `-or-later` variants resolve upward (GPL-2.0-or-later combines cleanly with GPL-3.0). Apache-2.0 is compatible with GPL-3.0+ but not GPL-2.0-only.
 
 Report all conflicts with severity:
 - **ERROR** for conflicts in bundled/linked dependencies
@@ -249,3 +207,26 @@ After generating the license file, offer to:
 - [ ] Create or update `THIRD-PARTY-LICENSES` / `NOTICE` file
 - [ ] Add license badge to README.md
 - [ ] Verify the license choice against any CI license-checking tools in the project
+
+## Delegation (Claude Code only)
+
+> **Skip this section unless you are Claude Code.** The Agent tool with
+> `subagent_type:` parameters is a Claude Code feature. Codex, Cursor, Gemini,
+> OpenCode, and other hosts do not have it — run the full workflow yourself
+> instead.
+
+The dependency enumeration (Phase 1), the registry/package-database license
+lookups (Phase 2), and the SPDX-text matching across `package.json` /
+`Cargo.toml` / `requirements.txt` / `go.mod` / vendored headers is bulk read
+work. If you are on Opus or the dependency graph is large, delegate it to the
+`readonly-scanner` subagent (model: haiku) via the Agent tool with
+`subagent_type: readonly-scanner`. Ask it to return:
+
+- One row per dependency: `name`, `version`, `source_file`, `declared_license`,
+  `resolved_license` (if it found a `LICENSE` file in the installed package),
+  and the lookup method it used.
+- A separate list of dependencies with missing or ambiguous license info.
+
+Keep the policy decisions (compatibility matrix in Phase 3, license-floor in
+Phase 4, generating the LICENSE file in Phase 5) in this session. The scanner
+reports; you judge.

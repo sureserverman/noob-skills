@@ -1,6 +1,6 @@
 ---
 name: github-workflow-audit
-description: Use when checking GitHub Actions workflows for errors, outdated actions, security issues, and improvements — audits all .github/workflows/*.yml files in the repo at once
+description: Use when checking GitHub Actions workflows for errors, outdated actions, security issues, or improvements. Trigger on "audit my workflows", "check github actions", "are my actions secure", "my release workflow is broken", "update my action versions", or when the user wants a health check across the repo's `.github/workflows/` directory.
 ---
 
 # GitHub Workflow Audit
@@ -9,9 +9,26 @@ Systematic review of all GitHub Actions workflow files in a repository for error
 
 ## Instructions
 
-When invoked, find all `.github/workflows/*.yml` and `.github/workflows/*.yaml` files in the repository using the Glob tool. Read every workflow file. Then run every check section below in order.
+When invoked, audit all workflows in the repository.
+
+**Preferred — run the bundled script first:**
+
+```bash
+skills/github-workflow-audit/scripts/audit-workflows.py [repo-root]
+```
+
+It covers: YAML parse via `yaml.safe_load`, required `on:`/`runs-on:`/`uses:` structure, action-version currency via GitHub `releases/latest` redirect-scrape (flags outdated major versions and mutable branch refs like `@main`), expression-injection detection for `github.event.*`/`inputs.*`/`github.head_ref` in `run:` blocks, secret-echo patterns, possible hardcoded credentials, `permissions: write-all` and missing permissions blocks, malformed `if:` comparisons, same-step `GITHUB_ENV` reads, missing `needs:` targets, missing `timeout-minutes`/`concurrency`, and unreferenced reusable workflows. Findings are printed as a severity-sorted table. Exit 1 if any ERROR was found.
+
+**After the script, still read the sections below** — they remain the source of truth for what's checked and cover the pieces that need human judgment: section 1 (reusable-workflow input/secret parity between callers and callees), section 4 (artifact-name uniqueness across jobs, `continue-on-error` intent, input type correctness), section 5 (cross-workflow consistency beyond what parsing can verify), and section 6 (parallelization opportunities, run-block extraction). Use the numbered sections as both the script's spec and your manual-pass checklist. Offer to fix all issues at the end.
+
+<details>
+<summary>Manual pass (fallback — only if the script isn't available)</summary>
+
+Find all `.github/workflows/*.yml` and `.github/workflows/*.yaml` files in the repository using the Glob tool. Read every workflow file. Then run every check section below in order.
 
 For each finding, report severity: **ERROR** (will break the workflow), **WARN** (likely bug, security risk, or outdated), or **INFO** (improvement suggestion). At the end, provide a summary table and offer to fix all issues.
+
+</details>
 
 ## 1. YAML Syntax & Structure
 
@@ -98,3 +115,25 @@ After all checks, output:
 ```
 
 Then list **actionable fixes** grouped by severity (ERROR first), and offer to apply all fixes.
+
+## Delegation (Claude Code only)
+
+> **Skip this section unless you are Claude Code.** The Agent tool with
+> `subagent_type:` parameters is a Claude Code feature. Codex, Cursor, Gemini,
+> OpenCode, and other hosts do not have it — run the full workflow yourself
+> instead.
+
+The workflow/action enumeration, YAML parse, action-version redirect-scrapes,
+and `actionlint` pass are read-only bulk work. If you are on Opus, delegate
+them to the `readonly-scanner` subagent (model: haiku) via the Agent tool with
+`subagent_type: readonly-scanner`. Ask it to return:
+
+- Every `.github/workflows/*.yml` parsed, with `on`, `jobs.*.runs-on`,
+  `permissions`, and `timeout-minutes` per job.
+- Every `uses:` reference with its pinned ref and whether it's a SHA, a tag,
+  or a floating branch — plus the latest release for the owner/repo.
+- `actionlint` raw output if the binary is on PATH.
+
+Keep the severity assignment (sections 3 security and 4 correctness), the
+cross-workflow consistency check (section 5), and any fix offering in this
+session.

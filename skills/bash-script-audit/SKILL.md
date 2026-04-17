@@ -1,6 +1,6 @@
 ---
 name: bash-script-audit
-description: Use when checking a bash/shell script for errors, broken download URLs, outdated versions, or .onion link availability — before deploying or running installer scripts
+description: Use when checking a bash/shell script for errors, broken download URLs, outdated versions, or .onion link availability — before deploying or running installer scripts. Trigger on "audit this script", "check for broken download URLs", "is this installer safe", "does this .onion still resolve", "are these version pins current".
 ---
 
 # Bash Script Audit
@@ -11,7 +11,22 @@ Systematic review of a bash script for code errors and URL health, including .on
 
 When invoked, identify the target script. If the user specifies a file, use it. If unclear, ask.
 
+**Preferred — run the bundled script first:**
+
+```bash
+skills/bash-script-audit/scripts/audit.sh <script-path>
+```
+
+It covers: shebang count + validity + malformed-shebang detection, `bash -n` parse check, tilde-in-double-quotes, possible-missing-sudo on `&&` pipelines, `apt install` without `-y`, URL extraction + `curl -sI -L` for clearnet URLs, Tor SOCKS (`socks5h://127.0.0.1:9050`) check for `.onion` URLs with torsocks fallback (skipped with INFO if Tor isn't running), and GitHub `releases/latest` redirect-scrape for version currency. Exit 1 if any ERROR was found.
+
+**After the script, still read the sections below** — they remain the source of truth for what's checked and cover the pieces that need human judgment: section 1 (mkdir-vs-cp-destination mismatches, heredoc expansion intent, chmod +x after download), section 4 (rm -rf on variable paths, quote-spaces, Flatpak ID sanity), and any non-GitHub version-currency decisions. Use the numbered sections as both the script's spec and your manual-pass checklist. Offer to fix all issues at the end.
+
+<details>
+<summary>Manual pass (fallback — only if the script isn't available)</summary>
+
 Run every check section below in order. For each finding, report severity: **ERROR** (will break execution), **WARN** (likely bug or outdated), or **INFO** (cosmetic/suggestion). At the end, provide a summary table and offer to fix all issues.
+
+</details>
 
 ## 1. Structural & Syntax Errors
 
@@ -104,3 +119,24 @@ After all checks, output:
 ```
 
 Then list **actionable fixes** grouped by severity (ERROR first), and offer to apply all fixes.
+
+## Delegation (Claude Code only)
+
+> **Skip this section unless you are Claude Code.** The Agent tool with
+> `subagent_type:` parameters is a Claude Code feature. Codex, Cursor, Gemini,
+> OpenCode, and other hosts do not have it — run the full workflow yourself
+> instead.
+
+The `shellcheck` pass, URL liveness probes, version-pin lookups, and `.onion`
+resolution are read-only scan work and dominate runtime when auditing more than
+a handful of scripts. If you are on Opus, delegate them to the `readonly-scanner`
+subagent (model: haiku) via the Agent tool with `subagent_type: readonly-scanner`.
+Hand it:
+
+- The list of script paths.
+- The severity table so it can label findings.
+- A short timeout budget per URL (5–10s) and a cap on total URLs probed.
+
+Ask it to return a per-finding table (`severity`, `file:line`, `issue`, `evidence`).
+Keep the fix offering and any actual edits in this session — the scanner cannot
+write.

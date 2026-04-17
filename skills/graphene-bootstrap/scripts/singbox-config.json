@@ -1,0 +1,242 @@
+{
+  "log": {
+    "level": "info"
+  },
+  "dns": {
+    "servers": [
+      {
+        "type": "udp",
+        "tag": "tor-dns",
+        "server": "127.0.0.1",
+        "server_port": 5400
+      }
+    ],
+    "final": "tor-dns"
+  },
+  "inbounds": [
+    {
+      "type": "tun",
+      "tag": "tun-in",
+      "address": ["172.19.0.1/30"],
+      "mtu": 1500,
+      "auto_route": true,
+      "strict_route": true,
+      "stack": "gvisor",
+      "exclude_package": [
+        "io.nekohasekai.sfa",
+        "org.torproject.android",
+        "org.torproject.torbrowser",
+        "com.cakewallet.cake_wallet",
+        "com.monero.app",
+        "com.cypherstack.stackwallet",
+        "app.grapheneos.update.client"
+      ]
+    }
+  ],
+  "outbounds": [
+    {
+      "type": "socks",
+      "tag": "tor-firefox",
+      "server": "127.0.0.1",
+      "server_port": 9053
+    },
+    {
+      "type": "socks",
+      "tag": "tor-brave",
+      "server": "127.0.0.1",
+      "server_port": 9054
+    },
+    {
+      "type": "socks",
+      "tag": "tor-jelly",
+      "server": "127.0.0.1",
+      "server_port": 9055
+    },
+    {
+      "type": "socks",
+      "tag": "tor-conversations",
+      "server": "127.0.0.1",
+      "server_port": 9056
+    },
+    {
+      "type": "socks",
+      "tag": "tor-threema",
+      "server": "127.0.0.1",
+      "server_port": 9057
+    },
+    {
+      "type": "socks",
+      "tag": "tor-session",
+      "server": "127.0.0.1",
+      "server_port": 9058
+    },
+    {
+      "type": "socks",
+      "tag": "tor-element",
+      "server": "127.0.0.1",
+      "server_port": 9059
+    },
+    {
+      "type": "socks",
+      "tag": "tor-hypatia",
+      "server": "127.0.0.1",
+      "server_port": 9060
+    },
+    {
+      "type": "socks",
+      "tag": "tor-fluffychat",
+      "server": "127.0.0.1",
+      "server_port": 9061
+    },
+    {
+      "type": "socks",
+      "tag": "tor-schildichat",
+      "server": "127.0.0.1",
+      "server_port": 9062
+    },
+    {
+      "type": "socks",
+      "tag": "tor-atalk",
+      "server": "127.0.0.1",
+      "server_port": 9063
+    },
+    {
+      "type": "socks",
+      "tag": "tor-vanadium",
+      "server": "127.0.0.1",
+      "server_port": 9064
+    },
+    {
+      "type": "socks",
+      "tag": "tor-auditor",
+      "server": "127.0.0.1",
+      "server_port": 9065
+    },
+    {
+      "type": "socks",
+      "tag": "tor-simplex",
+      "server": "127.0.0.1",
+      "server_port": 9066
+    },
+    {
+      "type": "socks",
+      "tag": "tor-tuta",
+      "server": "127.0.0.1",
+      "server_port": 9067
+    },
+    {
+      "type": "socks",
+      "tag": "tor-protonmail",
+      "server": "127.0.0.1",
+      "server_port": 9068
+    },
+    {
+      "type": "socks",
+      "tag": "tor-shared",
+      "server": "127.0.0.1",
+      "server_port": 9052
+    },
+    {
+      "type": "direct",
+      "tag": "direct"
+    },
+    {
+      "type": "block",
+      "tag": "block"
+    }
+  ],
+  "route": {
+    "rules": [
+      {
+        "action": "sniff",
+        "timeout": "300ms"
+      },
+      {
+        "protocol": ["dns"],
+        "action": "hijack-dns"
+      },
+      {
+        "package_name": ["org.mozilla.firefox"],
+        "action": "route",
+        "outbound": "tor-firefox"
+      },
+      {
+        "package_name": ["com.brave.browser"],
+        "action": "route",
+        "outbound": "tor-brave"
+      },
+      {
+        "package_name": ["org.lineageos.jelly"],
+        "action": "route",
+        "outbound": "tor-jelly"
+      },
+      {
+        "package_name": ["eu.siacs.conversations"],
+        "action": "route",
+        "outbound": "tor-conversations"
+      },
+      {
+        "package_name": ["ch.threema.app.libre"],
+        "action": "route",
+        "outbound": "tor-threema"
+      },
+      {
+        "package_name": ["network.loki.messenger"],
+        "action": "route",
+        "outbound": "tor-session"
+      },
+      {
+        "package_name": ["io.element.android.x"],
+        "action": "route",
+        "outbound": "tor-element"
+      },
+      {
+        "package_name": ["org.maintainteam.hypatia"],
+        "action": "route",
+        "outbound": "tor-hypatia"
+      },
+      {
+        "package_name": ["chat.fluffy.fluffychat"],
+        "action": "route",
+        "outbound": "tor-fluffychat"
+      },
+      {
+        "package_name": ["chat.schildi.android"],
+        "action": "route",
+        "outbound": "tor-schildichat"
+      },
+      {
+        "package_name": ["org.atalk.android"],
+        "action": "route",
+        "outbound": "tor-atalk"
+      },
+      {
+        "package_name": ["app.vanadium.browser", "app.vanadium.config"],
+        "action": "route",
+        "outbound": "tor-vanadium"
+      },
+      {
+        "package_name": ["app.attestation.auditor"],
+        "action": "route",
+        "outbound": "tor-auditor"
+      },
+      {
+        "package_name": ["chat.simplex.app"],
+        "action": "route",
+        "outbound": "tor-simplex"
+      },
+      {
+        "package_name": ["de.tutao.tutanota"],
+        "action": "route",
+        "outbound": "tor-tuta"
+      },
+      {
+        "package_name": ["ch.protonmail.android"],
+        "action": "route",
+        "outbound": "tor-protonmail"
+      }
+    ],
+    "final": "tor-shared",
+    "auto_detect_interface": true
+  }
+}
