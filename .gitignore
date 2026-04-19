@@ -92,3 +92,7 @@ dist/
 *.tmp
 *.temp
 9
+
+# ===== AI / Design Plans =====
+docs/plans/
+plans/
