@@ -11,7 +11,7 @@ If you are a user invoking this skill, tell me the agent name and 2–3 sentence
 
 ## Why this pattern
 
-Each host's agent system has different strengths and a different config language. Writing four parallel agent files by hand drifts — the Claude Code version gets a fix that never makes it to the Codex TOML. The fix: one `_core.md` holds the identity, operating model, rules, and output schemas; each host file is a thin wrapper with **only** host-specific framing (invocation style, tool list, sandbox mode, globs). A small `build.sh` embeds the core into every wrapper so they stay in lockstep. Adapted from the testing-expert bundle at `/home/user/dev/agents/agents/testing-expert/` — review it before starting if unfamiliar.
+Each host's agent system has different strengths and a different config language. Writing four parallel agent files by hand drifts — the Claude Code version gets a fix that never makes it to the Codex TOML. The fix: one `_core.md` holds the identity, operating model, rules, and output schemas; each host file is a thin wrapper with **only** host-specific framing (invocation style, tool list, sandbox mode, globs). A small `build.sh` embeds the core into every wrapper so they stay in lockstep. Adapted from the testing-expert bundle at `/home/user/dev/ai-tools/agents/agents/testing-expert/` — review it before starting if unfamiliar.
 
 ## Do not hardcode the output path
 

@@ -1,6 +1,6 @@
 # Subagent best practices
 
-Drawn from Anthropic's Claude Code subagent docs, OpenAI's Codex subagent guide, the OpenCode agent documentation, Cursor's rules/agents reference, and the proven-in-production `testing-expert` bundle at `/home/user/dev/agents/agents/testing-expert/`.
+Drawn from Anthropic's Claude Code subagent docs, OpenAI's Codex subagent guide, the OpenCode agent documentation, Cursor's rules/agents reference, and the proven-in-production `testing-expert` bundle at `/home/user/dev/ai-tools/agents/agents/testing-expert/`.
 
 These principles apply across all four hosts. Host-specific mechanisms differ; the design does not.
 
@@ -148,4 +148,4 @@ A three-iteration bundle beats a first-draft-perfect bundle. The first draft is 
 - OpenCode agents: https://opencode.ai/docs/agents/
 - OpenCode permissions: https://opencode.ai/docs/permissions/
 - Cursor docs: https://cursor.com/docs
-- Working bundle: `/home/user/dev/agents/agents/testing-expert/`
+- Working bundle: `/home/user/dev/ai-tools/agents/agents/testing-expert/`
